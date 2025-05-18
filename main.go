@@ -28,6 +28,7 @@ func main() {
 		fmt.Println("4. Cari Data Sampah")
 		fmt.Println("5. Urutkan Data Sampah")
 		fmt.Println("6. Tampilkan Semua Data")
+		fmt.Println("7. Tampilkan Statistik")
 		fmt.Println("0. Keluar\n")
 
 		fmt.Print("Pilih menu : ")
@@ -41,37 +42,19 @@ func main() {
 		case 3:
 			hapusData(&data, &jumlahData)
 		case 4:
-			var key string
-			fmt.Print("Masukkan jenis sampah yang dicari: ")
-			fmt.Scan(&key)
-			index := cariData(data, jumlahData, key)
-			if index != -1 {
-				fmt.Printf("Data ditemukan: Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f\n",
-					data[index].jenis, data[index].jumlah, data[index].berat, data[index].total)
-			} else {
-				fmt.Println("Data tidak ditemukan.")
-			}
-
+			menuCariData(data, jumlahData)
 		case 5:
-			urutkanData(&data, jumlahData)
+			menuUrutkanData(&data, jumlahData)
 		case 6:
 			tampilkanData(data, jumlahData)
+		case 7:
+			tampilkanStatistik(data, jumlahData)
 		case 0:
 			fmt.Println("Terima kasih telah menggunakan aplikasi.")
+			return
 		default:
 			fmt.Println("Pilihan tidak valid.")
 		}
-	}
-}
-func tampilkanData(data dataSampah, n int) {
-	if n == 0 {
-		fmt.Println("Belum ada data.")
-		return
-	}
-
-	fmt.Printf("\n%-4s %-15s %-10s %-10s %-10s\n", "No", "Jenis", "Jumlah", "Berat", "Total")
-	for i := 0; i < n; i++ {
-		fmt.Printf("%-4d %-15s %-10d %-10.2f %-10.2f\n", i+1, data[i].jenis, data[i].jumlah, data[i].berat, data[i].total)
 	}
 }
 
@@ -87,11 +70,14 @@ func tambahData(A *dataSampah, n *int) {
 	fmt.Scan(&A[*n].jumlah)
 	fmt.Print("Masukkan berat per item (kg): ")
 	fmt.Scan(&A[*n].berat)
+	fmt.Print("Apakah sampah ini didaur ulang? (ya/tidak): ")
+	var daur string
+	fmt.Scan(&daur)
+	A[*n].daurUlang = (daur == "ya")
 
 	A[*n].total = float64(A[*n].jumlah) * A[*n].berat
+	*n++
 	fmt.Println("Data sampah berhasil ditambahkan.")
-	*n = *n + 1
-	fmt.Println("Jumlah data saat ini:", *n)
 }
 
 func ubahData(data *dataSampah, n int) {
@@ -106,8 +92,6 @@ func ubahData(data *dataSampah, n int) {
 
 	var hasil [NMAX]int
 	var jumlahHasil int
-
-	// Cari semua indeks data yang jenisnya sama dengan key
 	cariSemuaJenis(*data, n, key, &hasil, &jumlahHasil)
 
 	if jumlahHasil == 0 {
@@ -118,8 +102,8 @@ func ubahData(data *dataSampah, n int) {
 	fmt.Println("Data yang ditemukan:")
 	for i := 0; i < jumlahHasil; i++ {
 		idx := hasil[i]
-		fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f\n",
-			i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total)
+		fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t\n",
+			i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total, data[idx].daurUlang)
 	}
 
 	var pilihan int
@@ -133,27 +117,42 @@ func ubahData(data *dataSampah, n int) {
 
 	idxUbah := hasil[pilihan-1]
 
+	// Masukkan data baru
 	var jenisBaru string
 	var jumlahBaru int
 	var beratBaru float64
+	var daurUlangInput string
 
 	fmt.Print("Masukkan jenis sampah baru: ")
 	fmt.Scan(&jenisBaru)
+
 	fmt.Print("Masukkan jumlah baru: ")
 	fmt.Scan(&jumlahBaru)
+	if jumlahBaru < 0 {
+		fmt.Println("Jumlah tidak boleh negatif.")
+		return
+	}
+
 	fmt.Print("Masukkan berat baru (kg): ")
 	fmt.Scan(&beratBaru)
+	if beratBaru < 0 {
+		fmt.Println("Berat tidak boleh negatif.")
+		return
+	}
+
+	fmt.Print("Apakah sampah ini didaur ulang? (ya/tidak): ")
+	fmt.Scan(&daurUlangInput)
 
 	data[idxUbah].jenis = jenisBaru
 	data[idxUbah].jumlah = jumlahBaru
 	data[idxUbah].berat = beratBaru
 	data[idxUbah].total = float64(jumlahBaru) * beratBaru
+	data[idxUbah].daurUlang = daurUlangInput == "ya"
 
 	fmt.Println("Data sampah berhasil diubah.")
 }
 
 func hapusData(data *dataSampah, n *int) {
-	tampilkanData(*data, *n)
 	if *n == 0 {
 		fmt.Println("Belum ada data.")
 		return
@@ -165,7 +164,6 @@ func hapusData(data *dataSampah, n *int) {
 
 	var hasil [NMAX]int
 	var jumlahHasil int
-
 	cariSemuaJenis(*data, *n, key, &hasil, &jumlahHasil)
 
 	if jumlahHasil == 0 {
@@ -176,8 +174,8 @@ func hapusData(data *dataSampah, n *int) {
 	fmt.Println("Data yang ditemukan:")
 	for i := 0; i < jumlahHasil; i++ {
 		idx := hasil[i]
-		fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f\n",
-			i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total)
+		fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t\n",
+			i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total, data[idx].daurUlang)
 	}
 
 	var pilihan int
@@ -191,7 +189,7 @@ func hapusData(data *dataSampah, n *int) {
 
 	idxHapus := hasil[pilihan-1]
 
-	// Geser data ke kiri
+	// Geser elemen ke kiri untuk menghapus data
 	for i := idxHapus; i < *n-1; i++ {
 		data[i] = data[i+1]
 	}
@@ -199,21 +197,104 @@ func hapusData(data *dataSampah, n *int) {
 	fmt.Println("Data berhasil dihapus.")
 }
 
-func cariData(data dataSampah, n int, key string) int {
-	if n == 0 {
-		fmt.Println("Data kosong.")
-		return -1
+func cariSemuaJenis(data dataSampah, n int, key string, hasil *[NMAX]int, jumlah *int) {
+	*jumlah = 0
+	for i := 0; i < n; i++ {
+		if data[i].jenis == key {
+			hasil[*jumlah] = i
+			*jumlah++
+		}
 	}
+}
 
+func tampilkanData(data dataSampah, n int) {
+	if n == 0 {
+		fmt.Println("Belum ada data.")
+		return
+	}
+	fmt.Printf("\n%-4s %-15s %-10s %-10s %-10s %-10s\n", "No", "Jenis", "Jumlah", "Berat", "Total", "DaurUlang")
+	for i := 0; i < n; i++ {
+		daur := "Tidak"
+		if data[i].daurUlang {
+			daur = "Ya"
+		}
+		fmt.Printf("%-4d %-15s %-10d %-10.2f %-10.2f %-10s\n", i+1, data[i].jenis, data[i].jumlah, data[i].berat, data[i].total, daur)
+	}
+}
+
+func tampilkanStatistik(data dataSampah, n int) {
+	totalJumlah, totalDaurUlang := 0, 0
+	for i := 0; i < n; i++ {
+		totalJumlah += data[i].jumlah
+		if data[i].daurUlang {
+			totalDaurUlang += data[i].jumlah
+		}
+	}
+	fmt.Println("\n--- Statistik ---")
+	fmt.Println("Total sampah:", totalJumlah)
+	fmt.Println("Total sampah yang didaur ulang:", totalDaurUlang)
+}
+
+func menuCariData(data dataSampah, n int) {
+	var key string
+	fmt.Print("Masukkan jenis sampah yang dicari: ")
+	fmt.Scan(&key)
+	fmt.Print("Pilih metode pencarian (1 = Sequential, 2 = Binary): ")
 	var metode int
-	fmt.Print("Pilih metode pencarian (1=Sequential, 2=Binary): ")
 	fmt.Scan(&metode)
 
-	if metode == 2 {
-		urutkanData(&data, n) // pastikan data terurut dulu
-		return binarySearch(data, n, key)
+	var index int
+	if metode == 1 {
+		index = sequentialSearch(data, n, key)
 	} else {
-		return sequentialSearch(data, n, key)
+		urutkanDataByJenis(&data, n)
+		index = binarySearch(data, n, key)
+	}
+
+	if index != -1 {
+		fmt.Println("Data ditemukan:")
+		fmt.Printf("Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f\n",
+			data[index].jenis, data[index].jumlah, data[index].berat, data[index].total)
+	} else {
+		fmt.Println("Data tidak ditemukan.")
+	}
+}
+
+func menuUrutkanData(data *dataSampah, n int) {
+	fmt.Print("Urut berdasarkan: 1 = Jenis (Selection Sort), 2 = Jumlah (Insertion Sort): ")
+	var pilihan int
+	fmt.Scan(&pilihan)
+	if pilihan == 1 {
+		urutkanDataByJenis(data, n)
+		fmt.Println("Data diurutkan berdasarkan jenis.")
+	} else {
+		urutkanDataByJumlah(data, n)
+		fmt.Println("Data diurutkan berdasarkan jumlah.")
+	}
+	tampilkanData(*data, n)
+}
+
+func urutkanDataByJenis(data *dataSampah, n int) {
+	for i := 0; i < n-1; i++ {
+		min := i
+		for j := i + 1; j < n; j++ {
+			if data[j].jenis < data[min].jenis {
+				min = j
+			}
+		}
+		data[i], data[min] = data[min], data[i]
+	}
+}
+
+func urutkanDataByJumlah(data *dataSampah, n int) {
+	for i := 1; i < n; i++ {
+		temp := data[i]
+		j := i - 1
+		for j >= 0 && data[j].jumlah > temp.jumlah {
+			data[j+1] = data[j]
+			j--
+		}
+		data[j+1] = temp
 	}
 }
 
@@ -227,9 +308,7 @@ func sequentialSearch(data dataSampah, n int, key string) int {
 }
 
 func binarySearch(data dataSampah, n int, key string) int {
-	low := 0
-	high := n - 1
-
+	low, high := 0, n-1
 	for low <= high {
 		mid := (low + high) / 2
 		if data[mid].jenis == key {
@@ -241,25 +320,4 @@ func binarySearch(data dataSampah, n int, key string) int {
 		}
 	}
 	return -1
-}
-
-func urutkanData(data *dataSampah, n int) {
-	for i := 0; i < n-1; i++ {
-		for j := i + 1; j < n; j++ {
-			if data[i].jenis > data[j].jenis {
-				data[i], data[j] = data[j], data[i]
-			}
-		}
-	}
-	fmt.Println("Data berhasil diurutkan berdasarkan jenis.")
-	tampilkanData(*data, n)
-}
-func cariSemuaJenis(data dataSampah, n int, key string, hasil *[NMAX]int, jumlah *int) {
-	*jumlah = 0
-	for i := 0; i < n; i++ {
-		if data[i].jenis == key {
-			hasil[*jumlah] = i
-			*jumlah++
-		}
-	}
 }
