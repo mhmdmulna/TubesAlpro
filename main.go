@@ -11,6 +11,7 @@ type sampah struct {
 	jumlah       int
 	berat, total float64
 	daurUlang    bool
+	metodeDaur   string
 }
 
 type dataSampah [NMAX]sampah
@@ -50,7 +51,7 @@ func main() {
 		case 7:
 			tampilkanStatistik(data, jumlahData)
 		case 0:
-			fmt.Println("Terima kasih telah menggunakan aplikasi.")
+			fmt.Println("Terima kasih telah menggunakan aplikasi kami.")
 			return
 		default:
 			fmt.Println("Pilihan tidak valid.")
@@ -59,6 +60,8 @@ func main() {
 }
 
 func tambahData(A *dataSampah, n *int) {
+	var daur string
+
 	if *n >= NMAX {
 		fmt.Println("Kapasitas penyimpanan data sampah penuh.")
 		return
@@ -71,9 +74,15 @@ func tambahData(A *dataSampah, n *int) {
 	fmt.Print("Masukkan berat per item (kg): ")
 	fmt.Scan(&A[*n].berat)
 	fmt.Print("Apakah sampah ini didaur ulang? (ya/tidak): ")
-	var daur string
 	fmt.Scan(&daur)
 	A[*n].daurUlang = (daur == "ya")
+
+	if A[*n].daurUlang {
+		fmt.Print("Masukkan metode daur ulang: ")
+		fmt.Scan(&A[*n].metodeDaur)
+	} else {
+		A[*n].metodeDaur = "-"
+	}
 
 	A[*n].total = float64(A[*n].jumlah) * A[*n].berat
 	*n++
@@ -102,8 +111,7 @@ func ubahData(data *dataSampah, n int) {
 	fmt.Println("Data yang ditemukan:")
 	for i := 0; i < jumlahHasil; i++ {
 		idx := hasil[i]
-		fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t\n",
-			i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total, data[idx].daurUlang)
+		fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t, Metode Daur Ulang: %s\n", i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total, data[idx].daurUlang, data[idx].metodeDaur)
 	}
 
 	var pilihan int
@@ -122,6 +130,7 @@ func ubahData(data *dataSampah, n int) {
 	var jumlahBaru int
 	var beratBaru float64
 	var daurUlangInput string
+	var metodeDaurUlangBaru string
 
 	fmt.Print("Masukkan jenis sampah baru: ")
 	fmt.Scan(&jenisBaru)
@@ -142,12 +151,20 @@ func ubahData(data *dataSampah, n int) {
 
 	fmt.Print("Apakah sampah ini didaur ulang? (ya/tidak): ")
 	fmt.Scan(&daurUlangInput)
+	data[idxUbah].daurUlang = (daurUlangInput == "ya")
+
+	if data[idxUbah].daurUlang {
+		fmt.Print("Masukkan metode daur ulang baru: ")
+		fmt.Scan(&metodeDaurUlangBaru)
+		data[idxUbah].metodeDaur = metodeDaurUlangBaru
+	} else {
+		data[idxUbah].metodeDaur = "-"
+	}
 
 	data[idxUbah].jenis = jenisBaru
 	data[idxUbah].jumlah = jumlahBaru
 	data[idxUbah].berat = beratBaru
 	data[idxUbah].total = float64(jumlahBaru) * beratBaru
-	data[idxUbah].daurUlang = daurUlangInput == "ya"
 
 	fmt.Println("Data sampah berhasil diubah.")
 }
@@ -174,8 +191,7 @@ func hapusData(data *dataSampah, n *int) {
 	fmt.Println("Data yang ditemukan:")
 	for i := 0; i < jumlahHasil; i++ {
 		idx := hasil[i]
-		fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t\n",
-			i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total, data[idx].daurUlang)
+		fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t, Metode Daur Ulang: %s\n", i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total, data[idx].daurUlang, data[idx].metodeDaur)
 	}
 
 	var pilihan int
@@ -189,7 +205,6 @@ func hapusData(data *dataSampah, n *int) {
 
 	idxHapus := hasil[pilihan-1]
 
-	// Geser elemen ke kiri untuk menghapus data
 	for i := idxHapus; i < *n-1; i++ {
 		data[i] = data[i+1]
 	}
@@ -212,13 +227,13 @@ func tampilkanData(data dataSampah, n int) {
 		fmt.Println("Belum ada data.")
 		return
 	}
-	fmt.Printf("\n%-4s %-15s %-10s %-10s %-10s %-10s\n", "No", "Jenis", "Jumlah", "Berat", "Total", "DaurUlang")
+	fmt.Printf("\n%-4s %-15s %-10s %-10s %-10s %-10s %-20s\n", "No", "Jenis", "Jumlah", "Berat", "Total", "DaurUlang", "Metode Daur Ulang")
 	for i := 0; i < n; i++ {
 		daur := "Tidak"
 		if data[i].daurUlang {
 			daur = "Ya"
 		}
-		fmt.Printf("%-4d %-15s %-10d %-10.2f %-10.2f %-10s\n", i+1, data[i].jenis, data[i].jumlah, data[i].berat, data[i].total, daur)
+		fmt.Printf("%-4d %-15s %-10d %-10.2f %-10.2f %-10s %-20s\n", i+1, data[i].jenis, data[i].jumlah, data[i].berat, data[i].total, daur, data[i].metodeDaur)
 	}
 }
 
@@ -247,50 +262,104 @@ func menuCariData(data dataSampah, n int) {
 	if metode == 1 {
 		index = sequentialSearch(data, n, key)
 	} else {
-		urutkanDataByJenis(&data, n)
+		// Pastikan data sudah diurutkan sebelum menggunakan binary search
+		selectionSortByJenis(&data, n, true) // Mengurutkan data berdasarkan jenis
 		index = binarySearch(data, n, key)
 	}
 
 	if index != -1 {
 		fmt.Println("Data ditemukan:")
-		fmt.Printf("Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f\n",
-			data[index].jenis, data[index].jumlah, data[index].berat, data[index].total)
+		fmt.Printf("Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t, Metode Daur Ulang: %s\n", data[index].jenis, data[index].jumlah, data[index].berat, data[index].total, data[index].daurUlang, data[index].metodeDaur)
 	} else {
 		fmt.Println("Data tidak ditemukan.")
 	}
 }
 
 func menuUrutkanData(data *dataSampah, n int) {
-	fmt.Print("Urut berdasarkan: 1 = Jenis (Selection Sort), 2 = Jumlah (Insertion Sort): ")
-	var pilihan int
-	fmt.Scan(&pilihan)
-	if pilihan == 1 {
-		urutkanDataByJenis(data, n)
-		fmt.Println("Data diurutkan berdasarkan jenis.")
-	} else {
-		urutkanDataByJumlah(data, n)
-		fmt.Println("Data diurutkan berdasarkan jumlah.")
+	var metode, kriteria, arah int
+
+	fmt.Println("\n--- Menu Pengurutan Data ---")
+	fmt.Println("Metode:")
+	fmt.Println("1. Selection Sort")
+	fmt.Println("2. Insertion Sort")
+	fmt.Print("Pilih metode pengurutan (1/2): ")
+	fmt.Scan(&metode)
+
+	fmt.Println("\nKriteria:")
+	fmt.Println("1. Jenis")
+	fmt.Println("2. Jumlah")
+	fmt.Print("Pilih kriteria pengurutan (1/2): ")
+	fmt.Scan(&kriteria)
+
+	fmt.Println("\nArah:")
+	fmt.Println("1. Menaik (Ascending)")
+	fmt.Println("2. Menurun (Descending)")
+	fmt.Print("Pilih arah pengurutan (1/2): ")
+	fmt.Scan(&arah)
+
+	switch metode {
+	case 1:
+		if kriteria == 1 {
+			selectionSortByJenis(data, n, arah == 1)
+		} else if kriteria == 2 {
+			selectionSortByJumlah(data, n, arah == 1)
+		}
+	case 2:
+		if kriteria == 1 {
+			insertionSortByJenis(data, n, arah == 1)
+		} else if kriteria == 2 {
+			insertionSortByJumlah(data, n, arah == 1)
+		}
+	default:
+		fmt.Println("Metode tidak valid.")
+		return
 	}
+
+	fmt.Println("Data berhasil diurutkan.")
 	tampilkanData(*data, n)
 }
 
-func urutkanDataByJenis(data *dataSampah, n int) {
+func selectionSortByJenis(data *dataSampah, n int, ascending bool) {
 	for i := 0; i < n-1; i++ {
-		min := i
+		idx := i
 		for j := i + 1; j < n; j++ {
-			if data[j].jenis < data[min].jenis {
-				min = j
+			if (ascending && data[j].jenis < data[idx].jenis) || (!ascending && data[j].jenis > data[idx].jenis) {
+				idx = j
 			}
 		}
-		data[i], data[min] = data[min], data[i]
+		data[i], data[idx] = data[idx], data[i]
 	}
 }
 
-func urutkanDataByJumlah(data *dataSampah, n int) {
+func selectionSortByJumlah(data *dataSampah, n int, ascending bool) {
+	for i := 0; i < n-1; i++ {
+		idx := i
+		for j := i + 1; j < n; j++ {
+			if (ascending && data[j].jumlah < data[idx].jumlah) || (!ascending && data[j].jumlah > data[idx].jumlah) {
+				idx = j
+			}
+		}
+		data[i], data[idx] = data[idx], data[i]
+	}
+}
+
+func insertionSortByJenis(data *dataSampah, n int, ascending bool) {
 	for i := 1; i < n; i++ {
 		temp := data[i]
 		j := i - 1
-		for j >= 0 && data[j].jumlah > temp.jumlah {
+		for j >= 0 && ((ascending && data[j].jenis > temp.jenis) || (!ascending && data[j].jenis < temp.jenis)) {
+			data[j+1] = data[j]
+			j--
+		}
+		data[j+1] = temp
+	}
+}
+
+func insertionSortByJumlah(data *dataSampah, n int, ascending bool) {
+	for i := 1; i < n; i++ {
+		temp := data[i]
+		j := i - 1
+		for j >= 0 && ((ascending && data[j].jumlah > temp.jumlah) || (!ascending && data[j].jumlah < temp.jumlah)) {
 			data[j+1] = data[j]
 			j--
 		}
