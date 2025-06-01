@@ -21,6 +21,16 @@ func main() {
 	var jumlahData int
 	var pilihan int
 
+	// ----- Dummy Data -----
+	data[0] = sampah{jenis: "Plastik", jumlah: 10, berat: 0.5, total: 5.0, daurUlang: true, metodeDaur: "Dicacah"}
+	data[1] = sampah{jenis: "Kertas", jumlah: 20, berat: 0.1, total: 2.0, daurUlang: true, metodeDaur: "Dibuat bubur"}
+	data[2] = sampah{jenis: "Plastik", jumlah: 15, berat: 1.0, total: 15.0, daurUlang: true, metodeDaur: "Dicacah"}
+	data[3] = sampah{jenis: "Kardus", jumlah: 60, berat: 0.2, total: 60 * 0.2, daurUlang: true, metodeDaur: "BuburKertas"}
+	data[4] = sampah{jenis: "Styrofoam", jumlah: 20, berat: 0.01, total: 20 * 0.01, daurUlang: false, metodeDaur: "-"}
+	data[5] = sampah{jenis: "Plastik", jumlah: 50, berat: 1.5, total: 25.0, daurUlang: true, metodeDaur: "Dicacah"}
+	data[6] = sampah{jenis: "Styrofoam", jumlah: 42, berat: 0.5, total: 20 * 0.01, daurUlang: false, metodeDaur: "-"}
+	jumlahData = 7
+
 	for {
 		fmt.Println("\n----- Aplikasi Pengelolaan Sampah -----")
 		fmt.Println("1. Tambah Data Sampah")
@@ -125,7 +135,6 @@ func ubahData(data *dataSampah, n int) {
 
 	idxUbah := hasil[pilihan-1]
 
-	// Masukkan data baru
 	var jenisBaru string
 	var jumlahBaru int
 	var beratBaru float64
@@ -252,26 +261,42 @@ func tampilkanStatistik(data dataSampah, n int) {
 
 func menuCariData(data dataSampah, n int) {
 	var key string
+	var hasil [NMAX]int
+	var jumlahHasil int
 	fmt.Print("Masukkan jenis sampah yang dicari: ")
 	fmt.Scan(&key)
 	fmt.Print("Pilih metode pencarian (1 = Sequential, 2 = Binary): ")
 	var metode int
 	fmt.Scan(&metode)
 
-	var index int
-	if metode == 1 {
-		index = sequentialSearch(data, n, key)
-	} else {
-		// Pastikan data sudah diurutkan sebelum menggunakan binary search
-		selectionSortByJenis(&data, n, true) // Mengurutkan data berdasarkan jenis
-		index = binarySearch(data, n, key)
-	}
+	switch metode {
+	case 1:
+		sequentialSearch(data, n, key, &hasil, &jumlahHasil)
 
-	if index != -1 {
-		fmt.Println("Data ditemukan:")
-		fmt.Printf("Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t, Metode Daur Ulang: %s\n", data[index].jenis, data[index].jumlah, data[index].berat, data[index].total, data[index].daurUlang, data[index].metodeDaur)
-	} else {
-		fmt.Println("Data tidak ditemukan.")
+		if jumlahHasil == 0 {
+			fmt.Println("Data tidak ditemukan.")
+			return
+		}
+
+		fmt.Println("Data yang ditemukan:")
+		for i := 0; i < jumlahHasil; i++ {
+			idx := hasil[i]
+			fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t, Metode Daur Ulang: %s\n", i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total, data[idx].daurUlang, data[idx].metodeDaur)
+		}
+	case 2:
+		selectionSortByJenis(&data, n, true)
+		binarySearch(data, n, key, &hasil, &jumlahHasil)
+
+		if jumlahHasil == 0 {
+			fmt.Println("Data tidak ditemukan.")
+			return
+		}
+
+		fmt.Println("Data yang ditemukan:")
+		for i := 0; i < jumlahHasil; i++ {
+			idx := hasil[i]
+			fmt.Printf("%d. Jenis: %s, Jumlah: %d, Berat: %.2f, Total: %.2f, Daur Ulang: %t, Metode Daur Ulang: %s\n", i+1, data[idx].jenis, data[idx].jumlah, data[idx].berat, data[idx].total, data[idx].daurUlang, data[idx].metodeDaur)
+		}
 	}
 }
 
@@ -367,26 +392,44 @@ func insertionSortByJumlah(data *dataSampah, n int, ascending bool) {
 	}
 }
 
-func sequentialSearch(data dataSampah, n int, key string) int {
+func sequentialSearch(data dataSampah, n int, key string, hasil *[NMAX]int, jumlah *int) {
+	*jumlah = 0
 	for i := 0; i < n; i++ {
 		if data[i].jenis == key {
-			return i
+			hasil[*jumlah] = i
+			*jumlah++
 		}
 	}
-	return -1
 }
 
-func binarySearch(data dataSampah, n int, key string) int {
-	low, high := 0, n-1
+func binarySearch(data dataSampah, n int, key string, hasil *[NMAX]int, jumlah *int) {
+	*jumlah = 0
+	low := 0
+	high := n - 1
 	for low <= high {
 		mid := (low + high) / 2
 		if data[mid].jenis == key {
-			return mid
+			hasil[*jumlah] = mid
+			*jumlah++
+			// Cari ke kiri
+			left := mid - 1
+			for left >= 0 && data[left].jenis == key {
+				hasil[*jumlah] = left
+				*jumlah++
+				left--
+			}
+			// Cari ke kanan
+			right := mid + 1
+			for right < n && data[right].jenis == key {
+				hasil[*jumlah] = right
+				*jumlah++
+				right++
+			}
+			return
 		} else if data[mid].jenis < key {
 			low = mid + 1
 		} else {
 			high = mid - 1
 		}
 	}
-	return -1
 }
