@@ -146,17 +146,9 @@ func ubahData(data *dataSampah, n int) {
 
 	fmt.Print("Masukkan jumlah baru: ")
 	fmt.Scan(&jumlahBaru)
-	if jumlahBaru < 0 {
-		fmt.Println("Jumlah tidak boleh negatif.")
-		return
-	}
 
 	fmt.Print("Masukkan berat baru (kg): ")
 	fmt.Scan(&beratBaru)
-	if beratBaru < 0 {
-		fmt.Println("Berat tidak boleh negatif.")
-		return
-	}
 
 	fmt.Print("Apakah sampah ini didaur ulang? (ya/tidak): ")
 	fmt.Scan(&daurUlangInput)
